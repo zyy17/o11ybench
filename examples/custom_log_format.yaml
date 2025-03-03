@@ -1,0 +1,41 @@
+tokens:
+  - name: app
+    fake:
+      type: number
+      display: "kubernetes.pod_labels.app"
+      options:
+        type: int32
+        min: "1"
+        max: "100"
+        prefix: "app-"
+  
+  - name: namespace
+    display: "kubernetes.namespace"
+    fake:
+      type: words
+      options:
+        fixedWords:
+          - "default"
+  
+  - name: pod_ip
+    fake:
+      type: ipv4
+  
+  - name: message
+    fake:
+      type: words
+      options:
+        sizeRangeWithPossibility:
+          - "99%:10bytes-20bytes"
+          - "1%:1kb-2kb"
+      
+output:
+  custom: "[ {{ .timestamp }} ] {{ .pod_ip }}/{{ .namespace }} | {{ .app }} | {{ .message }}"
+  count: 100
+
+timeRange:
+  format: "RFC3339"
+  start: "2025-02-28T00:00:00Z"
+  end: "2025-03-01T00:00:00Z"
+  interval: "1s"
+  timezone: "UTC"

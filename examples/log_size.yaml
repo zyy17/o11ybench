@@ -1,0 +1,62 @@
+tokens:
+  - name: app
+    fake:
+      type: number
+      display: "kubernetes.pod_labels.app"
+      options:
+        type: int32
+        min: "1"
+        max: "1000"
+        prefix: "app-"
+  
+  - name: namespace
+    display: "kubernetes.namespace"
+    fake:
+      type: words
+      options:
+        fixedWords:
+          - "default"
+  
+  - name: pod_node_name
+    display: "kubernetes.pod_node_name"
+    fake:
+      type: ipv4
+  
+  - name: pod_ip
+    display: "kubernetes.pod_ip"
+    fake:
+      type: ipv4
+  
+  - name: pod_name
+    display: "kubernetes.pod_name"
+    fake:
+      type: words
+      options:
+        count: 1
+
+  - name: container_name
+    display: "kubernetes.container_name"
+    fake:
+      type: words
+      options:
+        fixedWords:
+          - "test"
+  
+  - name: message
+    fake:
+      type: words
+      options:
+        sizeRangeWithPossibility:
+          - "99%:10bytes-20bytes"
+          - "1%:1kb-2kb"
+      
+output:
+  logFormat: JSON
+  count: 100
+
+timeRange:
+  format: "RFC3339"
+  start: "2025-02-28T00:00:00Z"
+  end: "2025-03-01T00:00:00Z"
+  interval: "1s"
+  timezone: "UTC"
