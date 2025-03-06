@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"maps"
 	"os"
 	"sort"
 	"sync"
+	"text/template"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -98,6 +98,20 @@ const (
 	ClickHouse  = "02/Jan/2006:15:04:05 -0700"
 )
 
+const (
+	// DefaultCount is the default number of logs to generate.
+	DefaultCount = 100
+
+	// DefaultTimezone is the default timezone of the time range.
+	DefaultTimezone = "UTC"
+
+	// DefaultInterval is the default interval for each log.
+	DefaultInterval = "5s"
+
+	// DefaultTimeFormat is the default time format of the time range.
+	DefaultTimeFormat = string(TimestampFormatRFC3339)
+)
+
 type Generator struct {
 	tokens    []*faker.Token
 	output    *Output
@@ -113,6 +127,9 @@ type timeRange struct {
 }
 
 func NewGenerator(config *FakeDataConfig) (*Generator, error) {
+	// Set the default values for the config.
+	config.setDefault()
+
 	timeRange, err := parseTimeRange(&config.TimeRange)
 	if err != nil {
 		return nil, err
@@ -133,7 +150,7 @@ func NewGenerator(config *FakeDataConfig) (*Generator, error) {
 			config.Output.Count = 100
 		}
 
-		timeRange.end = time.Now().Add(timeRange.interval * time.Duration(config.Output.Count))
+		timeRange.end = timeRange.start.Add(timeRange.interval * time.Duration(config.Output.Count))
 	}
 
 	return &Generator{
@@ -155,6 +172,33 @@ func NewGeneratorFromFile(configFile string) (*Generator, error) {
 	}
 
 	return NewGenerator(cfg)
+}
+
+func (c *FakeDataConfig) setDefault() {
+	if c.Output.Count == 0 {
+		c.Output.Count = DefaultCount
+	}
+
+	if c.TimeRange.Timezone == "" {
+		c.TimeRange.Timezone = DefaultTimezone
+	}
+
+	if c.TimeRange.Interval == "" {
+		c.TimeRange.Interval = DefaultInterval
+	}
+
+	if c.TimeRange.Format == "" {
+		if c.Output.LogFormat == LogFormatApacheCommonLog {
+			c.TimeRange.Format = string(TimestampFormatApache)
+		} else {
+			c.TimeRange.Format = DefaultTimeFormat
+		}
+	}
+
+	if c.TimeRange.Start == "" {
+		// 6 hours ago
+		c.TimeRange.Start = time.Now().Add(-6 * time.Hour).Format(time.RFC3339)
+	}
 }
 
 func (g *Generator) Generate() ([]string, error) {
@@ -220,24 +264,23 @@ func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
 	}
 	tr.location = location
 
-	if cfg.Start != "" {
-		start, err := time.Parse(time.RFC3339, cfg.Start)
-		if err != nil {
-			return nil, err
-		}
-		tr.start = start
+	start, err := time.Parse(time.RFC3339, cfg.Start)
+	if err != nil {
+		return nil, err
 	}
+	tr.start = start
 
 	if cfg.End != "" {
 		end, err := time.Parse(time.RFC3339, cfg.End)
 		if err != nil {
 			return nil, err
 		}
-		tr.end = end
-	}
 
-	if tr.start.After(tr.end) {
-		return nil, fmt.Errorf("start time '%s' is after end time '%s'", tr.start, tr.end)
+		if tr.start.After(tr.end) {
+			return nil, fmt.Errorf("start time '%s' is after end time '%s'", tr.start, tr.end)
+		}
+
+		tr.end = end
 	}
 
 	if cfg.Interval != "" {
@@ -246,21 +289,15 @@ func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
 			return nil, err
 		}
 		tr.interval = interval
-	} else {
-		// Default interval is 5 seconds.
-		tr.interval = time.Second * 5
 	}
 
-	if tr.start.Add(tr.interval).After(tr.end) {
-		return nil, fmt.Errorf("interval '%s' is too long, it will exceed the end time '%s'", tr.interval, tr.end)
+	if !tr.end.IsZero() {
+		if tr.start.Add(tr.interval).After(tr.end) {
+			return nil, fmt.Errorf("interval '%s' is too long, it will exceed the end time '%s'", tr.interval, tr.end)
+		}
 	}
 
-	if tr.timeFormat == "" {
-		// Default time format is RFC3339.
-		tr.timeFormat = string(TimestampFormatRFC3339)
-	} else {
-		tr.timeFormat = string(TimestampFormat(tr.timeFormat))
-	}
+	tr.timeFormat = cfg.Format
 
 	return &tr, nil
 }
