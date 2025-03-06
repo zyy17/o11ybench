@@ -6,6 +6,14 @@ It will move very fast and break things, so please be careful to use it.
 
 The docs are not ready yet, so please refer to the code and examples.
 
+## Architecture
+
+The following diagram shows the future architecture of `o11ybench`.
+
+<div align="center">
+  <img src="./docs/images/arch.jpg" alt="Architecture">
+</div>
+
 ## Features
 
 - Support to generate logs by **ANY** format with the config file
