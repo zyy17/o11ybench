@@ -75,8 +75,11 @@ const (
 	// LogFormatApacheErrorLog is the format of apache error log.
 	LogFormatApacheErrorLog LogFormat = "ApacheErrorLog"
 
-	// LogFormatRFC3614 is the format of rfc3614 log.
-	LogFormatRFC3614 LogFormat = "RFC3614"
+	// LogFormatRFC3164 is the format of rfc3164 log.
+	LogFormatRFC3164 LogFormat = "RFC3164"
+
+	// LogFormatRFC5424 is the format of rfc5424 log.
+	LogFormatRFC5424 LogFormat = "RFC5424"
 
 	// LogFormatJSON is the format of JSON.
 	LogFormatJSON LogFormat = "JSON"
@@ -90,8 +93,6 @@ const (
 	TimestampFormatRFC3164     TimestampFormat = "RFC3164"
 	TimestampFormatRFC5424     TimestampFormat = "RFC5424"
 	TimestampFormatRFC3339     TimestampFormat = "RFC3339"
-	TimestampFormatCommonLog   TimestampFormat = "CommonLog"
-	TimestampFormatClickHouse  TimestampFormat = "ClickHouse"
 	TimestampFormatUnix        TimestampFormat = "UnixSeconds"
 )
 
@@ -100,8 +101,6 @@ const (
 	ApacheError = "Mon Jan 02 15:04:05 2006"
 	RFC3164     = "Jan 02 15:04:05"
 	RFC5424     = "2006-01-02T15:04:05.000Z"
-	CommonLog   = "02/Jan/2006:15:04:05 -0700"
-	ClickHouse  = "02/Jan/2006:15:04:05 -0700"
 )
 
 const (
@@ -198,8 +197,10 @@ func (c *FakeDataConfig) setDefault() {
 			c.TimeRange.Format = string(TimestampFormatApache)
 		} else if c.Output.LogFormat == LogFormatApacheErrorLog {
 			c.TimeRange.Format = string(TimestampFormatApacheError)
-		} else if c.Output.LogFormat == LogFormatRFC3614 {
+		} else if c.Output.LogFormat == LogFormatRFC3164 {
 			c.TimeRange.Format = string(TimestampFormatRFC3164)
+		} else if c.Output.LogFormat == LogFormatRFC5424 {
+			c.TimeRange.Format = string(TimestampFormatRFC5424)
 		} else {
 			c.TimeRange.Format = DefaultTimeFormat
 		}
@@ -316,9 +317,18 @@ func (g *Generator) generateByTemplate(overrideData map[string]any, tokens []*fa
 	data := make(map[string]any)
 
 	for _, token := range tokens {
-		value, err := faker.Fake(&token.FakeConfig)
-		if err != nil {
-			return "", err
+		var (
+			value any
+			err   error
+		)
+
+		if token.Value != nil {
+			value = token.Value
+		} else {
+			value, err = faker.Fake(&token.FakeConfig)
+			if err != nil {
+				return "", err
+			}
 		}
 
 		data[token.Name] = value
@@ -372,10 +382,6 @@ func (g *Generator) timestamp(timestamp time.Time) string {
 		return timestamp.In(g.timeRange.location).Format(RFC3164)
 	case string(TimestampFormatRFC5424):
 		return timestamp.In(g.timeRange.location).Format(RFC5424)
-	case string(TimestampFormatCommonLog):
-		return timestamp.In(g.timeRange.location).Format(CommonLog)
-	case string(TimestampFormatClickHouse):
-		return timestamp.In(g.timeRange.location).Format(ClickHouse)
 	case string(TimestampFormatRFC3339):
 		return timestamp.In(g.timeRange.location).Format(time.RFC3339)
 	case string(TimestampFormatUnix):
@@ -451,8 +457,13 @@ func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			if err != nil {
 				return nil, err
 			}
-		case LogFormatRFC3614:
-			log, err = g.generateByTemplate(generatedData, templates.RFC3614LogTokens, templates.RFC3614LogTemplate)
+		case LogFormatRFC3164:
+			log, err = g.generateByTemplate(generatedData, templates.RFC3164LogTokens, templates.RFC3164LogTemplate)
+			if err != nil {
+				return nil, err
+			}
+		case LogFormatRFC5424:
+			log, err = g.generateByTemplate(generatedData, templates.RFC5424LogTokens, templates.RFC5424LogTemplate)
 			if err != nil {
 				return nil, err
 			}

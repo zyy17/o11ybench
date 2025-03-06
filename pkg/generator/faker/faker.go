@@ -45,6 +45,9 @@ const (
 
 	// FakeTypeUUID is used to generate a fake uuid.
 	FakeTypeUUID FakeType = "uuid"
+
+	// FakeTypeDomainName is used to generate a fake domain name.
+	FakeTypeDomainName FakeType = "domainName"
 )
 
 // Token is a token that is part of the fake data.
@@ -100,6 +103,8 @@ func Fake(cfg *FakeConfig) (any, error) {
 		return FakeHackerPhrase(cfg.Options)
 	case FakeTypeUUID:
 		return FakeUUID(cfg.Options)
+	case FakeTypeDomainName:
+		return FakeDomainName(cfg.Options)
 	}
 
 	return nil, fmt.Errorf("unknown fake type: %s", cfg.Type)

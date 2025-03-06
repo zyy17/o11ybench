@@ -7,6 +7,7 @@ import (
 const (
 	// ApacheCommonLogTemplate is the template for outputting the fake data in ApacheCommonLog format.
 	// ApacheCommonLog : {host} {user-identifier} {auth-user-id} [{datetime}] "{method} {request} {protocol}" {response-code} {bytes}
+	// Example: 249.153.155.15 - Bechtelar5851 [06/Mar/2025:07:20:34 +0000] "GET http://www.nationalimpactful.org/technologies/transition HTTP/1.1" 501 8134
 	ApacheCommonLogTemplate string = "{{ ." + ReservedTokenNameHost + "}} - {{ ." + ReservedTokenNameUserID + "}} [{{ ." + ReservedTokenNameTimestamp + " }}] \"{{ ." + ReservedTokenNameHTTPMethod + " }} {{ ." + ReservedTokenNameHTTPURL + " }} {{ ." + ReservedTokenNameHTTPVersion + " }}\" {{ ." + ReservedTokenNameHTTPStatusCode + " }} {{ ." + ReservedTokenNameHTTPContentLength + " }}"
 )
 

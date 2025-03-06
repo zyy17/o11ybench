@@ -18,7 +18,13 @@ The following diagram shows the future architecture of `o11ybench`.
 
 - Support to generate logs by **ANY** format with the config file
 
-- Support to generate logs with popular log format, such as apache common log, nginx access log, etc
+- Support to generate logs for common log format:
+  - Apache Common Log
+  - Apache Combined Log
+  - Apache Error Log
+  - RFC3164 Log
+  - RFC5424 Log
+  - JSON Log
 
 ## Usage
 
@@ -40,7 +46,7 @@ You can find more config examples in the `configs` directory.
 
 ## Roadmap
 
-- [ ] Support to generate more popular log format
+- [x] Support to generate more popular log format
 - [ ] Support more fake data generator
 - [ ] Add logs benchmark
 - [ ] Add otel traces benchmark

@@ -50,8 +50,17 @@ const (
 	// ReservedTokenNamePriority is the reserved token name for the priority.
 	ReservedTokenNamePriority string = "priority"
 
+	// ReservedTokenNameVersion is the reserved token name for the version.
+	ReservedTokenNameVersion string = "version"
+
 	// ReservedTokenNameApplication is the reserved token name for the application.
 	ReservedTokenNameApplication string = "application"
+
+	// ReservedTokenNameMessageID is the reserved token name for the message ID.
+	ReservedTokenNameMessageID string = "messageID"
+
+	// ReservedTokenNameStructuredData is the reserved token name for the structured data.
+	ReservedTokenNameStructuredData string = "structuredData"
 )
 
 // ReservedTokenNameTimestamp is the reserved token name for the timestamp.

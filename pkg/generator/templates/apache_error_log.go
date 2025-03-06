@@ -6,6 +6,8 @@ import (
 
 const (
 	// ApacheErrorLogTemplate is the template for outputting the fake data in ApacheErrorLog format.
+	// ApacheErrorLog: [{timestamp}] [{module}:{severity}] [pid {pid}:tid {thread-id}] [client %{client}:{port}] %{message}
+	// Example: [Thu Mar 06 07:26:33 2025] [dolore:emerg] [pid 19366:tid 95232] [client 135.199.249.25:39294] We need to back up the cross-platform PNG alarm!
 	ApacheErrorLogTemplate string = "[{{ ." + ReservedTokenNameTimestamp + " }}] [{{ ." + ReservedTokenNameModule + " }}:{{ ." + ReservedTokenNameLogLevel + " }}] [pid {{ ." + ReservedTokenNamePid + " }}:tid {{ ." + ReservedTokenNameTid + " }}] [client {{ ." + ReservedTokenNameHost + " }}:{{ ." + ReservedTokenNamePort + " }}] {{ ." + ReservedTokenNameMessage + " }}"
 )
 

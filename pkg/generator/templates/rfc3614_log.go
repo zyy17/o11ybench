@@ -5,14 +5,15 @@ import (
 )
 
 const (
-	// RFC3614LogTemplate is the template for outputting the fake data in RFC3614Log format.
-	// RFC3164Log : <priority>{timestamp} {hostname} {application}[{pid}]: {message}
-	RFC3614LogTemplate string = "<{{ ." + ReservedTokenNamePriority + " }}>{{ ." + ReservedTokenNameTimestamp + " }} {{ ." + ReservedTokenNameHost + " }} {{ ." + ReservedTokenNameApplication + " }}[{{ ." + ReservedTokenNamePid + " }}]: {{ ." + ReservedTokenNameMessage + " }}"
+	// RFC3164LogTemplate is the template for outputting the fake data in RFC3164Log format.
+	// RFC3164Log: <priority>{timestamp} {hostname} {application}[{pid}]: {message}
+	// Example: <57>Mar 06 07:30:21 Lockman1496 veniam[7031]: Copying the program won't do anything, we need to connect the mobile SMTP protocol!
+	RFC3164LogTemplate string = "<{{ ." + ReservedTokenNamePriority + " }}>{{ ." + ReservedTokenNameTimestamp + " }} {{ ." + ReservedTokenNameHost + " }} {{ ." + ReservedTokenNameApplication + " }}[{{ ." + ReservedTokenNamePid + " }}]: {{ ." + ReservedTokenNameMessage + " }}"
 )
 
 var (
-	// RFC3614LogTokens is the list of tokens for the RFC3614Log format.
-	RFC3614LogTokens = []*faker.Token{
+	// RFC3164LogTokens is the list of tokens for the RFC3164Log format.
+	RFC3164LogTokens = []*faker.Token{
 		{
 			Name: ReservedTokenNamePriority,
 			FakeConfig: faker.FakeConfig{
@@ -46,7 +47,7 @@ var (
 				Options: map[string]any{
 					"type": faker.NumberTypeInt32,
 					"min":  "1",
-					"max":  "100000",
+					"max":  "10000",
 				},
 			},
 		},
