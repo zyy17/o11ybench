@@ -19,8 +19,8 @@ const (
 	// FakeTypeIPv4 is used to generate a fake IPv4 address.
 	FakeTypeIPv4 FakeType = "ipv4"
 
-	// FakeTypeUserID is used to generate a fake user ID.
-	FakeTypeUserID FakeType = "userID"
+	// FakeTypeUsername is used to generate a fake username.
+	FakeTypeUsername FakeType = "username"
 
 	// FakeTypeURI is used to generate a fake URI.
 	FakeTypeURI FakeType = "uri"
@@ -73,8 +73,8 @@ func Fake(cfg *FakeConfig) (any, error) {
 		return FakeNumber(cfg.Options)
 	case FakeTypeIPv4:
 		return FakeIPv4(cfg.Options)
-	case FakeTypeUserID:
-		return FakeUserID(cfg.Options)
+	case FakeTypeUsername:
+		return FakeUsername(cfg.Options)
 	case FakeTypeURI:
 		return FakeURI(cfg.Options)
 	case FakeTypeHTTPVersion:

@@ -21,7 +21,7 @@ var (
 		{
 			Name: ReservedTokenNameUserID,
 			FakeConfig: faker.FakeConfig{
-				Type: faker.FakeTypeUserID,
+				Type: faker.FakeTypeUsername,
 			},
 		},
 		{
