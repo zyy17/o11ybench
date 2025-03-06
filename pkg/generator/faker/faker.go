@@ -42,6 +42,9 @@ const (
 
 	// FakeTypeHackerPhrase is used to generate a fake hacker phrase.
 	FakeTypeHackerPhrase FakeType = "hackerPhrase"
+
+	// FakeTypeUUID is used to generate a fake uuid.
+	FakeTypeUUID FakeType = "uuid"
 )
 
 // Token is a token that is part of the fake data.
@@ -95,6 +98,8 @@ func Fake(cfg *FakeConfig) (any, error) {
 		return FakeLogLevel(cfg.Options)
 	case FakeTypeHackerPhrase:
 		return FakeHackerPhrase(cfg.Options)
+	case FakeTypeUUID:
+		return FakeUUID(cfg.Options)
 	}
 
 	return nil, fmt.Errorf("unknown fake type: %s", cfg.Type)
