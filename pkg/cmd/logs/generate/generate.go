@@ -3,7 +3,6 @@ package generate
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -45,7 +44,7 @@ func generateLogs(opts *GenerateOptions) error {
 	}
 
 	// Add a newline to the end of the logs.
-	output := strings.Join(logs, "\n") + "\n"
+	output := string(logs) + "\n"
 
 	if opts.Output != "" {
 		return os.WriteFile(opts.Output, []byte(output), 0644)

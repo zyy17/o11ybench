@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -117,7 +118,14 @@ const (
 	DefaultTimeFormat = string(TimestampFormatRFC3339)
 )
 
-type Generator struct {
+// Generator is the interface for load data generator.
+type Generator interface {
+	Generate() ([]byte, error)
+}
+
+var _ Generator = &generator{}
+
+type generator struct {
 	tokens    []*faker.Token
 	output    *Output
 	timeRange *timeRange
@@ -131,7 +139,7 @@ type timeRange struct {
 	timeFormat string
 }
 
-func NewGenerator(config *FakeDataConfig) (*Generator, error) {
+func NewGenerator(config *FakeDataConfig) (Generator, error) {
 	// Set the default values for the config.
 	config.setDefault()
 
@@ -158,14 +166,14 @@ func NewGenerator(config *FakeDataConfig) (*Generator, error) {
 		timeRange.end = timeRange.start.Add(timeRange.interval * time.Duration(config.Output.Count))
 	}
 
-	return &Generator{
+	return &generator{
 		tokens:    config.Tokens,
 		output:    &config.Output,
 		timeRange: timeRange,
 	}, nil
 }
 
-func NewGeneratorFromFile(configFile string) (*Generator, error) {
+func NewGeneratorFromFile(configFile string) (Generator, error) {
 	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -213,7 +221,7 @@ func (c *FakeDataConfig) setDefault() {
 	}
 }
 
-func (g *Generator) Generate() ([]string, error) {
+func (g *generator) Generate() ([]byte, error) {
 	var (
 		chunks = make([]*chunk, 0)
 	)
@@ -250,8 +258,9 @@ func (g *Generator) Generate() ([]string, error) {
 		chunks = append(chunks, chunk)
 	}
 
+	var output []string
 	if len(chunks) == 1 {
-		return chunks[0].logs, nil
+		output = chunks[0].logs
 	} else {
 		logs := make([]string, 0)
 		// Sort the chunks by start time and merge them.
@@ -263,8 +272,10 @@ func (g *Generator) Generate() ([]string, error) {
 			logs = append(logs, chunk.logs...)
 		}
 
-		return logs, nil
+		output = logs
 	}
+
+	return []byte(strings.Join(output, "\n")), nil
 }
 
 func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
@@ -308,7 +319,7 @@ func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
 	return &tr, nil
 }
 
-func (g *Generator) generateByTemplate(overrideData map[string]any, tokens []*faker.Token, templateString string) (string, error) {
+func (g *generator) generateByTemplate(overrideData map[string]any, tokens []*faker.Token, templateString string) (string, error) {
 	data := make(map[string]any)
 
 	for _, token := range tokens {
@@ -334,7 +345,7 @@ func (g *Generator) generateByTemplate(overrideData map[string]any, tokens []*fa
 	return g.templateOutput(templateString, data)
 }
 
-func (g *Generator) templateOutput(templateString string, data map[string]any) (string, error) {
+func (g *generator) templateOutput(templateString string, data map[string]any) (string, error) {
 	tmpl, err := template.New("output").Parse(templateString)
 	if err != nil {
 		return "", err
@@ -348,7 +359,7 @@ func (g *Generator) templateOutput(templateString string, data map[string]any) (
 	return buf.String(), nil
 }
 
-func (g *Generator) outputJSON(data map[string]any) (string, error) {
+func (g *generator) outputJSON(data map[string]any) (string, error) {
 	for k, v := range data {
 		for _, token := range g.tokens {
 			// If the token has a display name, use the display name as the key.
@@ -367,7 +378,7 @@ func (g *Generator) outputJSON(data map[string]any) (string, error) {
 	return string(jsonData), nil
 }
 
-func (g *Generator) timestamp(timestamp time.Time) string {
+func (g *generator) timestamp(timestamp time.Time) string {
 	switch g.timeRange.timeFormat {
 	case string(TimestampFormatApache):
 		return timestamp.In(g.timeRange.location).Format(Apache)
@@ -392,7 +403,7 @@ type chunk struct {
 	logs  []string
 }
 
-func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
+func (g *generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 	var (
 		logs    = make([]string, 0)
 		current = start

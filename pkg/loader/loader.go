@@ -7,6 +7,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zyy17/o11ybench/pkg/generator"
 )
 
 type Loader struct {
@@ -24,10 +26,6 @@ type LoaderOptions struct {
 	ClientOptions *ClientOptions
 }
 
-type PayloadGenerator interface {
-	Generate() ([]byte, error)
-}
-
 type Stats struct {
 	TotalRequests atomic.Int64
 	TotalErrors   atomic.Int64
@@ -37,7 +35,7 @@ type HTTPRequest struct {
 	Method           string
 	URL              string
 	Headers          map[string]string
-	PayloadGenerator PayloadGenerator
+	PayloadGenerator generator.Generator
 	EnableGzip       bool
 }
 
