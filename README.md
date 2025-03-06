@@ -42,7 +42,7 @@ The `o11ybench` binary will be built in the `bin` directory.
 o11ybench logs generate -c config.yaml
 ```
 
-You can find more config examples in the `configs` directory.
+You can find more config examples in the [examples](./examples) directory.
 
 ## Roadmap
 

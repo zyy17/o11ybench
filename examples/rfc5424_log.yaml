@@ -1,0 +1,10 @@
+output:
+  logFormat: RFC5424
+  count: 100
+
+timeRange:
+  format: "RFC3339"
+  start: "2025-02-28T00:00:00Z"
+  end: "2025-03-01T00:00:00Z"
+  interval: "1s"
+  timezone: "UTC"

@@ -180,7 +180,8 @@ func NewGeneratorFromFile(configFile string) (*Generator, error) {
 }
 
 func (c *FakeDataConfig) setDefault() {
-	if c.Output.Count == 0 {
+	if c.Output.Count == 0 && c.TimeRange.End == "" {
+		// Limit the default count to 100 to avoid generating too many logs.
 		c.Output.Count = DefaultCount
 	}
 
@@ -287,8 +288,8 @@ func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
 			return nil, err
 		}
 
-		if tr.start.After(tr.end) {
-			return nil, fmt.Errorf("start time '%s' is after end time '%s'", tr.start, tr.end)
+		if tr.start.After(end) {
+			return nil, fmt.Errorf("start time '%s' is after end time '%s'", tr.start, end)
 		}
 
 		tr.end = end
@@ -300,12 +301,6 @@ func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
 			return nil, err
 		}
 		tr.interval = interval
-	}
-
-	if !tr.end.IsZero() {
-		if tr.start.Add(tr.interval).After(tr.end) {
-			return nil, fmt.Errorf("interval '%s' is too long, it will exceed the end time '%s'", tr.interval, tr.end)
-		}
 	}
 
 	tr.timeFormat = cfg.Format
