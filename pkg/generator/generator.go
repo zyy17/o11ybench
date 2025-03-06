@@ -152,12 +152,12 @@ func (g *Generator) Generate() ([]string, error) {
 
 		var (
 			generatedData = make(map[string]any)
-			current       = current.Add(g.timeRange.interval)
-			log           string
 
+			log string
 			err error
 		)
 
+		current = current.Add(g.timeRange.interval)
 		for _, token := range g.tokens {
 			value, err := faker.Fake(&token.FakeConfig)
 			if err != nil {
@@ -167,7 +167,8 @@ func (g *Generator) Generate() ([]string, error) {
 			generatedData[token.Name] = value
 		}
 
-		generatedData["timestamp"] = g.timestamp(current.UnixNano())
+		// Set the timestamp to the current time.
+		generatedData[templates.ReservedTokenNameTimestamp] = g.timestamp(current.UnixNano())
 
 		if g.output.Custom != "" {
 			log, err = g.templateOutput(g.output.Custom, generatedData)

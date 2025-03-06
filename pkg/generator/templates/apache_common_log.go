@@ -14,10 +14,6 @@ const (
 	// It only take effect in `FormatApacheCommonLog` and `FormatApacheCombinedLog`.
 	ReservedTokenNameUserID string = "userID"
 
-	// ReservedTokenNameTimestamp is the reserved token name for the timestamp.
-	// It only take effect in `FormatApacheCommonLog` and `FormatApacheCombinedLog`.
-	ReservedTokenNameTimestamp string = "timestamp"
-
 	// ReservedTokenNameHTTPMethod is the reserved token name for the HTTP method.
 	// It only take effect in `FormatApacheCommonLog` and `FormatApacheCombinedLog`.
 	ReservedTokenNameHTTPMethod string = "httpMethod"
