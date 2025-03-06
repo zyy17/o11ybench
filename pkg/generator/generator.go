@@ -364,9 +364,14 @@ func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 
 		current = current.Add(g.timeRange.interval)
 		for _, token := range g.tokens {
-			value, err := faker.Fake(&token.FakeConfig)
-			if err != nil {
-				return nil, err
+			var value any
+			if token.Value != nil {
+				value = token.Value
+			} else {
+				value, err = faker.Fake(&token.FakeConfig)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			generatedData[token.Name] = value
