@@ -49,3 +49,10 @@ You can find more config examples in the `configs` directory.
 - [ ] Output results in svg format
 - [ ] Expose Prometheus metrics
 - [ ] Flexible to define hybrid workloads benchmark by config file
+
+## Acknowledgements
+
+This project builds upon the work of several excellent open source projects:
+
+- [gofakeit](https://github.com/brianvoe/gofakeit) - An amazing fake data generation library.
+- [flog](https://github.com/mingrammer/flog) - A fantastic log generator that provided inspiration.
