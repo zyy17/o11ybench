@@ -5,13 +5,13 @@ import (
 )
 
 const (
-	// ApacheCommonLogTemplate is the template for outputting the fake data in ApacheCommonLog format.
-	ApacheCommonLogTemplate string = "{{ ." + ReservedTokenNameHost + "}} - {{ ." + ReservedTokenNameUserID + "}} [{{ ." + ReservedTokenNameTimestamp + " }}] \"{{ ." + ReservedTokenNameHTTPMethod + " }} {{ ." + ReservedTokenNameHTTPURL + " }} {{ ." + ReservedTokenNameHTTPVersion + " }}\" {{ ." + ReservedTokenNameHTTPStatusCode + " }} {{ ." + ReservedTokenNameHTTPContentLength + " }}"
+	// ApacheCombinedLogTemplate is the template for outputting the fake data in ApacheCombinedLog format.
+	ApacheCombinedLogTemplate string = "{{ ." + ReservedTokenNameHost + "}} - {{ ." + ReservedTokenNameUserID + "}} [{{ ." + ReservedTokenNameTimestamp + " }}] \"{{ ." + ReservedTokenNameHTTPMethod + " }} {{ ." + ReservedTokenNameHTTPURL + " }} {{ ." + ReservedTokenNameHTTPVersion + " }}\" {{ ." + ReservedTokenNameHTTPStatusCode + " }} {{ ." + ReservedTokenNameHTTPContentLength + " }} \"{{ ." + ReservedTokenNameReferer + " }}\" \"{{ ." + ReservedTokenNameHTTPUserAgent + " }}\""
 )
 
 var (
-	// ApacheCommonLogTokens is the list of tokens for the ApacheCommonLog format.
-	ApacheCommonLogTokens = []*faker.Token{
+	// ApacheCombinedLogTokens is the list of tokens for the ApacheCombinedLog format.
+	ApacheCombinedLogTokens = []*faker.Token{
 		{
 			Name: ReservedTokenNameHost,
 			FakeConfig: faker.FakeConfig{
@@ -60,6 +60,21 @@ var (
 					"max":  "100000",
 					"type": "int32",
 				},
+			},
+		},
+		{
+			Name: ReservedTokenNameReferer,
+			FakeConfig: faker.FakeConfig{
+				Type: faker.FakeTypeURI,
+				Options: map[string]any{
+					"url": true,
+				},
+			},
+		},
+		{
+			Name: ReservedTokenNameHTTPUserAgent,
+			FakeConfig: faker.FakeConfig{
+				Type: faker.FakeTypeHTTPUserAgent,
 			},
 		},
 	}

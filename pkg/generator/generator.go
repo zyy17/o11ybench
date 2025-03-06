@@ -188,7 +188,7 @@ func (c *FakeDataConfig) setDefault() {
 	}
 
 	if c.TimeRange.Format == "" {
-		if c.Output.LogFormat == LogFormatApacheCommonLog {
+		if c.Output.LogFormat == LogFormatApacheCommonLog || c.Output.LogFormat == LogFormatApacheCombinedLog {
 			c.TimeRange.Format = string(TimestampFormatApache)
 		} else {
 			c.TimeRange.Format = DefaultTimeFormat
@@ -428,6 +428,11 @@ func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 		switch g.output.LogFormat {
 		case LogFormatApacheCommonLog:
 			log, err = g.generateByTemplate(generatedData, templates.ApacheCommonLogTokens, templates.ApacheCommonLogTemplate)
+			if err != nil {
+				return nil, err
+			}
+		case LogFormatApacheCombinedLog:
+			log, err = g.generateByTemplate(generatedData, templates.ApacheCombinedLogTokens, templates.ApacheCombinedLogTemplate)
 			if err != nil {
 				return nil, err
 			}
