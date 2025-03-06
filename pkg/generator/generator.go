@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"maps"
 	"os"
+	"sort"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -36,7 +38,10 @@ type Output struct {
 	Custom string `yaml:"custom,omitempty" json:"custom,omitempty"`
 
 	// Count is the number of logs to generate.
-	Count int `yaml:"count,omitempty" json:"count,omitempty"`
+	Count int64 `yaml:"count,omitempty" json:"count,omitempty"`
+
+	// Parallel is the number of parallel workers that used to generate the fake data.
+	Parallel int `yaml:"parallel,omitempty" json:"parallel,omitempty"`
 }
 
 // TimeRange is the time range of the fake data.
@@ -113,6 +118,24 @@ func NewGenerator(config *FakeDataConfig) (*Generator, error) {
 		return nil, err
 	}
 
+	if !timeRange.end.IsZero() {
+		// Calculate the total number of logs to generate.
+		totalCount := (timeRange.end.UnixNano()-timeRange.start.UnixNano())/int64(timeRange.interval) + 1
+
+		if config.Output.Count > 0 && config.Output.Count < totalCount {
+			timeRange.end = timeRange.start.Add(timeRange.interval * time.Duration(config.Output.Count))
+		} else {
+			config.Output.Count = totalCount
+		}
+	} else {
+		if config.Output.Count == 0 {
+			// Default count is 100.
+			config.Output.Count = 100
+		}
+
+		timeRange.end = time.Now().Add(timeRange.interval * time.Duration(config.Output.Count))
+	}
+
 	return &Generator{
 		tokens:    config.Tokens,
 		output:    &config.Output,
@@ -136,109 +159,113 @@ func NewGeneratorFromFile(configFile string) (*Generator, error) {
 
 func (g *Generator) Generate() ([]string, error) {
 	var (
-		logs    = make([]string, 0)
-		count   = 0
-		current = g.timeRange.start
+		chunks = make([]*chunk, 0)
 	)
 
-	for {
-		if g.output.Count > 0 && count >= g.output.Count {
-			break
-		}
-
-		if current.After(g.timeRange.end) {
-			break
-		}
-
-		var (
-			generatedData = make(map[string]any)
-
-			log string
-			err error
-		)
-
-		current = current.Add(g.timeRange.interval)
-		for _, token := range g.tokens {
-			value, err := faker.Fake(&token.FakeConfig)
-			if err != nil {
-				return nil, err
+	if g.output.Parallel > 0 {
+		wg := sync.WaitGroup{}
+		chunks = make([]*chunk, g.output.Parallel)
+		count := g.output.Count / int64(g.output.Parallel)
+		for i := 0; i < g.output.Parallel; i++ {
+			if i == g.output.Parallel-1 {
+				count += g.output.Count % int64(g.output.Parallel)
 			}
+			start := g.timeRange.start.Add(time.Duration(i) * g.timeRange.interval * time.Duration(count))
+			end := start.Add(g.timeRange.interval * time.Duration(count))
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				chunk, err := g.doGenerate(start, end)
+				if err != nil {
+					fmt.Printf("Generate [%d] chunk failed: %v\n", i, err)
+					return
+				}
 
-			generatedData[token.Name] = value
+				// Write the chunk by worker index to avoid using mutex.
+				chunks[i] = chunk
+			}()
 		}
-
-		// Set the timestamp to the current time.
-		generatedData[templates.ReservedTokenNameTimestamp] = g.timestamp(current.UnixNano())
-
-		if g.output.Custom != "" {
-			log, err = g.templateOutput(g.output.Custom, generatedData)
-			if err != nil {
-				return nil, err
-			}
-			logs = append(logs, log)
-			count++
-			continue
+		wg.Wait()
+	} else {
+		chunk, err := g.doGenerate(g.timeRange.start, g.timeRange.end)
+		if err != nil {
+			return nil, err
 		}
-
-		switch g.output.LogFormat {
-		case LogFormatApacheCommonLog:
-			log, err = g.doGenerate(generatedData, templates.ApacheCommonLogTokens, templates.ApacheCommonLogTemplate)
-			if err != nil {
-				return nil, err
-			}
-		case LogFormatJSON:
-			log, err = g.outputJSON(generatedData)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		logs = append(logs, log)
-		count++
+		chunks = append(chunks, chunk)
 	}
 
-	return logs, nil
+	if len(chunks) == 1 {
+		return chunks[0].logs, nil
+	} else {
+		logs := make([]string, 0)
+		// Sort the chunks by start time and merge them.
+		sort.Slice(chunks, func(i, j int) bool {
+			return chunks[i].start.Before(chunks[j].start)
+		})
+
+		for _, chunk := range chunks {
+			logs = append(logs, chunk.logs...)
+		}
+
+		return logs, nil
+	}
 }
 
 func parseTimeRange(cfg *TimeRange) (*timeRange, error) {
+	var tr timeRange
+
 	location, err := time.LoadLocation(cfg.Timezone)
 	if err != nil {
 		return nil, err
 	}
+	tr.location = location
 
-	start, err := time.Parse(time.RFC3339, cfg.Start)
-	if err != nil {
-		return nil, err
+	if cfg.Start != "" {
+		start, err := time.Parse(time.RFC3339, cfg.Start)
+		if err != nil {
+			return nil, err
+		}
+		tr.start = start
 	}
 
-	end, err := time.Parse(time.RFC3339, cfg.End)
-	if err != nil {
-		return nil, err
+	if cfg.End != "" {
+		end, err := time.Parse(time.RFC3339, cfg.End)
+		if err != nil {
+			return nil, err
+		}
+		tr.end = end
 	}
 
-	if start.After(end) {
-		return nil, fmt.Errorf("start time '%s' is after end time '%s'", start, end)
+	if tr.start.After(tr.end) {
+		return nil, fmt.Errorf("start time '%s' is after end time '%s'", tr.start, tr.end)
 	}
 
-	interval, err := time.ParseDuration(cfg.Interval)
-	if err != nil {
-		return nil, err
+	if cfg.Interval != "" {
+		interval, err := time.ParseDuration(cfg.Interval)
+		if err != nil {
+			return nil, err
+		}
+		tr.interval = interval
+	} else {
+		// Default interval is 5 seconds.
+		tr.interval = time.Second * 5
 	}
 
-	if start.Add(interval).After(end) {
-		return nil, fmt.Errorf("interval '%s' is too long, it will exceed the end time '%s'", interval, end)
+	if tr.start.Add(tr.interval).After(tr.end) {
+		return nil, fmt.Errorf("interval '%s' is too long, it will exceed the end time '%s'", tr.interval, tr.end)
 	}
 
-	return &timeRange{
-		start:      start,
-		end:        end,
-		location:   location,
-		interval:   interval,
-		timeFormat: cfg.Format,
-	}, nil
+	if tr.timeFormat == "" {
+		// Default time format is RFC3339.
+		tr.timeFormat = string(TimestampFormatRFC3339)
+	} else {
+		tr.timeFormat = string(TimestampFormat(tr.timeFormat))
+	}
+
+	return &tr, nil
 }
 
-func (g *Generator) doGenerate(overrideData map[string]any, tokens []*faker.Token, templateString string) (string, error) {
+func (g *Generator) generateByTemplate(overrideData map[string]any, tokens []*faker.Token, templateString string) (string, error) {
 	data := make(map[string]any)
 
 	for _, token := range tokens {
@@ -279,6 +306,7 @@ func (g *Generator) outputJSON(data map[string]any) (string, error) {
 			}
 		}
 	}
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return "", err
@@ -287,8 +315,7 @@ func (g *Generator) outputJSON(data map[string]any) (string, error) {
 	return string(jsonData), nil
 }
 
-func (g *Generator) timestamp(timestampNanoseconds int64) string {
-	timestamp := time.Unix(0, timestampNanoseconds)
+func (g *Generator) timestamp(timestamp time.Time) string {
 	switch g.timeRange.timeFormat {
 	case string(TimestampFormatApache):
 		return timestamp.In(g.timeRange.location).Format(Apache)
@@ -309,4 +336,72 @@ func (g *Generator) timestamp(timestampNanoseconds int64) string {
 	default:
 		return timestamp.In(g.timeRange.location).Format(g.timeRange.timeFormat)
 	}
+}
+
+type chunk struct {
+	start time.Time
+	end   time.Time
+	logs  []string
+}
+
+func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
+	var (
+		logs    = make([]string, 0)
+		current = start
+	)
+
+	for {
+		if current.Equal(end) {
+			break
+		}
+
+		var (
+			generatedData = make(map[string]any)
+
+			log string
+			err error
+		)
+
+		current = current.Add(g.timeRange.interval)
+		for _, token := range g.tokens {
+			value, err := faker.Fake(&token.FakeConfig)
+			if err != nil {
+				return nil, err
+			}
+
+			generatedData[token.Name] = value
+		}
+
+		// Set the timestamp to the current time.
+		generatedData[templates.ReservedTokenNameTimestamp] = g.timestamp(current)
+		if g.output.Custom != "" {
+			log, err = g.templateOutput(g.output.Custom, generatedData)
+			if err != nil {
+				return nil, err
+			}
+			logs = append(logs, log)
+			continue
+		}
+
+		switch g.output.LogFormat {
+		case LogFormatApacheCommonLog:
+			log, err = g.generateByTemplate(generatedData, templates.ApacheCommonLogTokens, templates.ApacheCommonLogTemplate)
+			if err != nil {
+				return nil, err
+			}
+		case LogFormatJSON:
+			log, err = g.outputJSON(generatedData)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		logs = append(logs, log)
+	}
+
+	return &chunk{
+		logs:  logs,
+		start: start,
+		end:   end,
+	}, nil
 }
