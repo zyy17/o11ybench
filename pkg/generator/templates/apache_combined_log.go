@@ -6,6 +6,7 @@ import (
 
 const (
 	// ApacheCombinedLogTemplate is the template for outputting the fake data in ApacheCombinedLog format.
+	// ApacheCombinedLog : {host} {user-identifier} {auth-user-id} [{datetime}] "{method} {request} {protocol}" {response-code} {bytes} "{referrer}" "{agent}"
 	ApacheCombinedLogTemplate string = "{{ ." + ReservedTokenNameHost + "}} - {{ ." + ReservedTokenNameUserID + "}} [{{ ." + ReservedTokenNameTimestamp + " }}] \"{{ ." + ReservedTokenNameHTTPMethod + " }} {{ ." + ReservedTokenNameHTTPURL + " }} {{ ." + ReservedTokenNameHTTPVersion + " }}\" {{ ." + ReservedTokenNameHTTPStatusCode + " }} {{ ." + ReservedTokenNameHTTPContentLength + " }} \"{{ ." + ReservedTokenNameReferer + " }}\" \"{{ ." + ReservedTokenNameHTTPUserAgent + " }}\""
 )
 

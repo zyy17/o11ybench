@@ -75,6 +75,9 @@ const (
 	// LogFormatApacheErrorLog is the format of apache error log.
 	LogFormatApacheErrorLog LogFormat = "ApacheErrorLog"
 
+	// LogFormatRFC3614 is the format of rfc3614 log.
+	LogFormatRFC3614 LogFormat = "RFC3614"
+
 	// LogFormatJSON is the format of JSON.
 	LogFormatJSON LogFormat = "JSON"
 )
@@ -195,6 +198,8 @@ func (c *FakeDataConfig) setDefault() {
 			c.TimeRange.Format = string(TimestampFormatApache)
 		} else if c.Output.LogFormat == LogFormatApacheErrorLog {
 			c.TimeRange.Format = string(TimestampFormatApacheError)
+		} else if c.Output.LogFormat == LogFormatRFC3614 {
+			c.TimeRange.Format = string(TimestampFormatRFC3164)
 		} else {
 			c.TimeRange.Format = DefaultTimeFormat
 		}
@@ -443,6 +448,11 @@ func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			}
 		case LogFormatApacheErrorLog:
 			log, err = g.generateByTemplate(generatedData, templates.ApacheErrorLogTokens, templates.ApacheErrorLogTemplate)
+			if err != nil {
+				return nil, err
+			}
+		case LogFormatRFC3614:
+			log, err = g.generateByTemplate(generatedData, templates.RFC3614LogTokens, templates.RFC3614LogTemplate)
 			if err != nil {
 				return nil, err
 			}
