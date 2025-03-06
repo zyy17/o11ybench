@@ -37,6 +37,24 @@ const (
 	// ReservedTokenNameReferer is the reserved token name for the referer.
 	// It only take effect in `FormatApacheCombinedLog`.
 	ReservedTokenNameReferer string = "referer"
+
+	// ReservedTokenNameMessage is the reserved token name for the message.
+	ReservedTokenNameMessage string = "message"
+
+	// ReservedTokenNameModule is the reserved token name for the module.
+	ReservedTokenNameModule string = "module"
+
+	// ReservedTokenNamePid is the reserved token name for the pid.
+	ReservedTokenNamePid string = "pid"
+
+	// ReservedTokenNameTid is the reserved token name for the tid.
+	ReservedTokenNameTid string = "tid"
+
+	// ReservedTokenNamePort is the reserved token name for the port.
+	ReservedTokenNamePort string = "port"
+
+	// ReservedTokenNameLogLevel is the reserved token name for the log level.
+	ReservedTokenNameLogLevel string = "logLevel"
 )
 
 // ReservedTokenNameTimestamp is the reserved token name for the timestamp.

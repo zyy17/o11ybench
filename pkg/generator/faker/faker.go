@@ -36,6 +36,12 @@ const (
 
 	// FakeTypeHTTPUserAgent is used to generate a fake HTTP user agent.
 	FakeTypeHTTPUserAgent FakeType = "httpUserAgent"
+
+	// FakeTypeLogLevel is used to generate a fake log level.
+	FakeTypeLogLevel FakeType = "logLevel"
+
+	// FakeTypeHackerPhrase is used to generate a fake hacker phrase.
+	FakeTypeHackerPhrase FakeType = "hackerPhrase"
 )
 
 // Token is a token that is part of the fake data.
@@ -85,6 +91,10 @@ func Fake(cfg *FakeConfig) (any, error) {
 		return FakeHTTPStatusCode(cfg.Options)
 	case FakeTypeHTTPUserAgent:
 		return FakeHTTPUserAgent(cfg.Options)
+	case FakeTypeLogLevel:
+		return FakeLogLevel(cfg.Options)
+	case FakeTypeHackerPhrase:
+		return FakeHackerPhrase(cfg.Options)
 	}
 
 	return nil, fmt.Errorf("unknown fake type: %s", cfg.Type)

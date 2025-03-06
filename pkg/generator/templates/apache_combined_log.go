@@ -56,9 +56,9 @@ var (
 			FakeConfig: faker.FakeConfig{
 				Type: faker.FakeTypeNumber,
 				Options: map[string]any{
+					"type": faker.NumberTypeInt32,
 					"min":  "100",
 					"max":  "100000",
-					"type": "int32",
 				},
 			},
 		},

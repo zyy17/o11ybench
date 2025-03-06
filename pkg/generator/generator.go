@@ -72,6 +72,9 @@ const (
 	// LogFormatApacheCombinedLog is the format of apache combined log.
 	LogFormatApacheCombinedLog LogFormat = "ApacheCombinedLog"
 
+	// LogFormatApacheErrorLog is the format of apache error log.
+	LogFormatApacheErrorLog LogFormat = "ApacheErrorLog"
+
 	// LogFormatJSON is the format of JSON.
 	LogFormatJSON LogFormat = "JSON"
 )
@@ -190,6 +193,8 @@ func (c *FakeDataConfig) setDefault() {
 	if c.TimeRange.Format == "" {
 		if c.Output.LogFormat == LogFormatApacheCommonLog || c.Output.LogFormat == LogFormatApacheCombinedLog {
 			c.TimeRange.Format = string(TimestampFormatApache)
+		} else if c.Output.LogFormat == LogFormatApacheErrorLog {
+			c.TimeRange.Format = string(TimestampFormatApacheError)
 		} else {
 			c.TimeRange.Format = DefaultTimeFormat
 		}
@@ -433,6 +438,11 @@ func (g *Generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			}
 		case LogFormatApacheCombinedLog:
 			log, err = g.generateByTemplate(generatedData, templates.ApacheCombinedLogTokens, templates.ApacheCombinedLogTemplate)
+			if err != nil {
+				return nil, err
+			}
+		case LogFormatApacheErrorLog:
+			log, err = g.generateByTemplate(generatedData, templates.ApacheErrorLogTokens, templates.ApacheErrorLogTemplate)
 			if err != nil {
 				return nil, err
 			}
