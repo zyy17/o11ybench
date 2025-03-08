@@ -43,6 +43,9 @@ type Output struct {
 
 	// Parallel is the number of parallel workers that used to generate the fake data.
 	Parallel int `yaml:"parallel,omitempty" json:"parallel,omitempty"`
+
+	// DisableTimestamp is used to disable the timestamp of the fake data.
+	DisableTimestamp *bool `yaml:"disableTimestamp,omitempty" json:"disableTimestamp,omitempty"`
 }
 
 // TimeRange is the time range of the fake data.
@@ -426,7 +429,7 @@ func (g *generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			var value any
 			if token.Value != nil {
 				value = token.Value
-			} else {
+			} else if token.Name != templates.ReservedTokenNameTimestamp {
 				value, err = faker.Fake(&token.FakeConfig)
 				if err != nil {
 					return nil, err
@@ -436,8 +439,11 @@ func (g *generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			generatedData[token.Name] = value
 		}
 
-		// Set the timestamp to the current time.
-		generatedData[templates.ReservedTokenNameTimestamp] = g.timestamp(current)
+		// Set the timestamp.
+		if g.output.DisableTimestamp == nil || !*g.output.DisableTimestamp {
+			generatedData[templates.ReservedTokenNameTimestamp] = g.timestamp(current)
+		}
+
 		if g.output.Custom != "" {
 			log, err = g.templateOutput(g.output.Custom, generatedData)
 			if err != nil {
