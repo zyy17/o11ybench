@@ -38,8 +38,11 @@ type Output struct {
 	// Custom is the custom format of the fake data. You can use `{{ .<token_name> }}` to refer to the token.
 	Custom string `yaml:"custom,omitempty" json:"custom,omitempty"`
 
-	// Count is the number of logs to generate.
+	// Count is the total number of logs to generate.
 	Count int64 `yaml:"count,omitempty" json:"count,omitempty"`
+
+	// IntervalCount is the number of logs to generate per interval. It's mutually exclusive with `Count`.
+	IntervalCount int64 `yaml:"intervalCount,omitempty" json:"intervalCount,omitempty"`
 
 	// Parallel is the number of parallel workers that used to generate the fake data.
 	Parallel int `yaml:"parallel,omitempty" json:"parallel,omitempty"`
@@ -453,40 +456,21 @@ func (g *generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 			continue
 		}
 
-		switch g.output.LogFormat {
-		case LogFormatApacheCommonLog:
-			log, err = g.generateByTemplate(generatedData, templates.ApacheCommonLogTokens, templates.ApacheCommonLogTemplate)
+		if g.output.IntervalCount > 0 {
+			for i := 0; i < int(g.output.IntervalCount); i++ {
+				log, err := g.generateLogs(generatedData)
+				if err != nil {
+					return nil, err
+				}
+				logs = append(logs, log)
+			}
+		} else {
+			log, err := g.generateLogs(generatedData)
 			if err != nil {
 				return nil, err
 			}
-		case LogFormatApacheCombinedLog:
-			log, err = g.generateByTemplate(generatedData, templates.ApacheCombinedLogTokens, templates.ApacheCombinedLogTemplate)
-			if err != nil {
-				return nil, err
-			}
-		case LogFormatApacheErrorLog:
-			log, err = g.generateByTemplate(generatedData, templates.ApacheErrorLogTokens, templates.ApacheErrorLogTemplate)
-			if err != nil {
-				return nil, err
-			}
-		case LogFormatRFC3164:
-			log, err = g.generateByTemplate(generatedData, templates.RFC3164LogTokens, templates.RFC3164LogTemplate)
-			if err != nil {
-				return nil, err
-			}
-		case LogFormatRFC5424:
-			log, err = g.generateByTemplate(generatedData, templates.RFC5424LogTokens, templates.RFC5424LogTemplate)
-			if err != nil {
-				return nil, err
-			}
-		case LogFormatJSON:
-			log, err = g.outputJSON(generatedData)
-			if err != nil {
-				return nil, err
-			}
+			logs = append(logs, log)
 		}
-
-		logs = append(logs, log)
 	}
 
 	return &chunk{
@@ -494,4 +478,47 @@ func (g *generator) doGenerate(start time.Time, end time.Time) (*chunk, error) {
 		start: start,
 		end:   end,
 	}, nil
+}
+
+func (g *generator) generateLogs(generatedData map[string]any) (string, error) {
+	switch g.output.LogFormat {
+	case LogFormatApacheCommonLog:
+		log, err := g.generateByTemplate(generatedData, templates.ApacheCommonLogTokens, templates.ApacheCommonLogTemplate)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	case LogFormatApacheCombinedLog:
+		log, err := g.generateByTemplate(generatedData, templates.ApacheCombinedLogTokens, templates.ApacheCombinedLogTemplate)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	case LogFormatApacheErrorLog:
+		log, err := g.generateByTemplate(generatedData, templates.ApacheErrorLogTokens, templates.ApacheErrorLogTemplate)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	case LogFormatRFC3164:
+		log, err := g.generateByTemplate(generatedData, templates.RFC3164LogTokens, templates.RFC3164LogTemplate)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	case LogFormatRFC5424:
+		log, err := g.generateByTemplate(generatedData, templates.RFC5424LogTokens, templates.RFC5424LogTemplate)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	case LogFormatJSON:
+		log, err := g.outputJSON(generatedData)
+		if err != nil {
+			return "", err
+		}
+		return log, nil
+	}
+
+	return "", nil
 }
