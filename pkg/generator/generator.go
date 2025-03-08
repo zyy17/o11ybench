@@ -194,7 +194,7 @@ func NewGeneratorFromFile(configFile string) (Generator, error) {
 }
 
 func (c *FakeDataConfig) setDefault() {
-	if c.Output.Count == 0 && c.TimeRange.End == "" {
+	if c.Output.Count == 0 && c.TimeRange.End == "" && c.Output.IntervalCount == 0 {
 		// Limit the default count to 100 to avoid generating too many logs.
 		c.Output.Count = DefaultCount
 	}
@@ -235,13 +235,10 @@ func (g *generator) Generate() ([]byte, error) {
 	if g.output.Parallel > 0 {
 		wg := sync.WaitGroup{}
 		chunks = make([]*chunk, g.output.Parallel)
-		count := g.output.Count / int64(g.output.Parallel)
+		timeRange := g.timeRange.end.Sub(g.timeRange.start) / time.Duration(g.output.Parallel)
 		for i := 0; i < g.output.Parallel; i++ {
-			if i == g.output.Parallel-1 {
-				count += g.output.Count % int64(g.output.Parallel)
-			}
-			start := g.timeRange.start.Add(time.Duration(i) * g.timeRange.interval * time.Duration(count))
-			end := start.Add(g.timeRange.interval * time.Duration(count))
+			start := g.timeRange.start.Add(time.Duration(i) * timeRange)
+			end := start.Add(timeRange)
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
