@@ -3,86 +3,67 @@ package loader
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
+	"io"
 	"net/http"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/zyy17/o11ybench/pkg/generator"
 )
 
 type Loader struct {
-	rate          int
-	workerNum     int
-	duration      time.Duration
-	stats         *Stats
-	clientOptions *ClientOptions
+	opts *LoaderOptions
 }
 
 type LoaderOptions struct {
-	Rate          int
-	WorkerNum     int
-	Duration      time.Duration
-	ClientOptions *ClientOptions
-}
-
-type Stats struct {
-	TotalRequests atomic.Int64
-	TotalErrors   atomic.Int64
-}
-
-type HTTPRequest struct {
-	Method           string
-	URL              string
-	Headers          map[string]string
-	PayloadGenerator generator.Generator
-	EnableGzip       bool
+	Rate         int
+	WorkerNum    int
+	Duration     time.Duration
+	Endpoint     string
+	DB           string
+	Table        string
+	PipelineName string
+	EnableGzip   bool
+	IsInfinite   bool
+	Generator    generator.Generator
 }
 
 func NewLoader(opts *LoaderOptions) (*Loader, error) {
 	return &Loader{
-		rate:          opts.Rate,
-		workerNum:     opts.WorkerNum,
-		duration:      opts.Duration,
-		clientOptions: opts.ClientOptions,
-		stats: &Stats{
-			TotalRequests: atomic.Int64{},
-			TotalErrors:   atomic.Int64{},
-		},
+		opts: opts,
 	}, nil
 }
 
-func (l *Loader) Start(req *HTTPRequest) error {
+func (l *Loader) Start() error {
 	var (
 		// endTime is the time when the loader will stop.
-		endTime = time.Now().Add(l.duration)
+		endTime = time.Now().Add(l.opts.Duration)
 
-		// calculate the number of requests per worker.
-		requestNum = l.rate / l.workerNum
+		// FIXME: make it configurable.
+		requestNum = 1
 
 		wg sync.WaitGroup
 	)
 
-	for i := 0; i < l.workerNum; i++ {
+	for i := 0; i < l.opts.WorkerNum; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for {
 				// check if we should stop.
-				if time.Now().After(endTime) {
+				if !l.opts.IsInfinite && time.Now().After(endTime) {
 					return
 				}
 
 				start := time.Now()
 				for i := 0; i < requestNum; i++ {
-					_, err := l.doHTTPRequest(req)
-					if err != nil {
-						l.stats.TotalErrors.Add(1)
+					if err := l.doHTTPRequest(); err != nil {
+						fmt.Println(err)
 					}
-					l.stats.TotalRequests.Add(1)
 
 					// check if we should stop.
-					if time.Now().After(endTime) {
+					if !l.opts.IsInfinite && time.Now().After(endTime) {
 						return
 					}
 				}
@@ -101,42 +82,61 @@ func (l *Loader) Start(req *HTTPRequest) error {
 	return nil
 }
 
-func (l *Loader) doHTTPRequest(req *HTTPRequest) (int, error) {
-	client, err := NewClient(l.clientOptions)
+func (l *Loader) doHTTPRequest() error {
+	// FIXME: make it configurable.
+	url := fmt.Sprintf("%s/v1/events/logs?db=%s&table=%s&pipeline_name=%s", l.opts.Endpoint, l.opts.DB, l.opts.Table, l.opts.PipelineName)
+
+	client, err := NewClient(&ClientOptions{
+		TimeoutInMillisecond: 10000,
+	})
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	var buffer bytes.Buffer
-	payload, err := req.PayloadGenerator.Generate()
+	var headers = make(map[string]string)
+	payload, err := l.opts.Generator.Generate()
 	if err != nil {
-		return 0, err
+		return err
 	}
+	headers["Content-Type"] = "application/json"
 
-	if req.EnableGzip {
-		if _, err := gzip.NewWriter(&buffer).Write(payload); err != nil {
-			return 0, err
+	if l.opts.EnableGzip {
+		writer := gzip.NewWriter(&buffer)
+		if _, err := writer.Write(payload); err != nil {
+			return err
 		}
+		writer.Close()
+
 		// Set the content encoding to gzip.
-		req.Headers["Content-Encoding"] = "gzip"
+		headers["Content-Encoding"] = "gzip"
 	} else {
 		buffer = *bytes.NewBuffer(payload)
 	}
 
-	rawReq, err := http.NewRequest(req.Method, req.URL, &buffer)
+	rawReq, err := http.NewRequest(http.MethodPost, url, &buffer)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	for k, v := range req.Headers {
+	for k, v := range headers {
 		rawReq.Header.Set(k, v)
 	}
 
 	resp, err := client.Do(rawReq)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode, nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }
