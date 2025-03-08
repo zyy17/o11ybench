@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 )
@@ -79,4 +80,9 @@ func ParsePercentage(percentage string) (float64, error) {
 	}
 
 	return num / 100, nil
+}
+
+// Generate a random number in [min, max).
+func RandomNumber(min, max int64) int64 {
+	return rand.Int63n(max-min) + min
 }

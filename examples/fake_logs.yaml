@@ -1,0 +1,33 @@
+tokens:
+  - name: app
+    fake:
+      type: number
+      display: "kubernetes.pod_labels.app"
+      options:
+        type: int32
+        min: "1"
+        max: "1000"
+        prefix: "app-"
+  
+  - name: message
+    fake:
+      type: logs
+      options:
+        dataset: "Apache_2k"
+        sizeRangeWithPossibility:
+          - "20%:200bytes-1kb"
+          - "75%:1kb-2kb"
+          - "4%:2kb-100kb"
+          - "0.5%:200kb-1mb"
+          - "0.5%:1mb-5mb"
+      
+output:
+  logFormat: JSON
+  count: 10
+
+timeRange:
+  format: "RFC3339"
+  start: "2025-02-28T00:00:00Z"
+  end: "2025-03-01T00:00:00Z"
+  interval: "1s"
+  timezone: "UTC"
