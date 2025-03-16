@@ -1,0 +1,38 @@
+generator:
+  logs:
+    tokens:
+    - name: domain
+      type: string
+      fake:
+        kind: domainName
+    
+    - name: username
+      type: string
+      fake:
+        kind: username
+    
+    - name: message
+      type: string
+      fake:
+        kind: logs
+        options:
+          dataset: Zookeeper_2k
+          size: 1kb
+    
+    format:
+      type: json
+
+loader:
+  rate: 100
+  duration: 10s
+  logs:
+    recordsPerRequest: 10
+  http:
+    host: localhost
+    port: 4000
+    uri: "/v1/events/logs?db=public&pipeline_name=greptime_identity&table=o11ybench"
+    method: post
+    headers:
+      content-type: application/json
+    compression: gzip
+    responseHeaderTimeout: 10s

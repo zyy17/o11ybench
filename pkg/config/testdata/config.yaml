@@ -1,0 +1,44 @@
+generator:
+  logs:
+    tokens:
+    - name: domain
+      type: string
+      fake:
+        kind: domainName
+    
+    - name: username
+      type: string
+      fake:
+        kind: username
+    
+    - name: message
+      type: string
+      fake:
+        kind: words
+        options:
+          count: 10
+    
+    format:
+      type: json
+
+  time:
+    range:
+      start: 2025-01-01T08:00:00Z
+      end: 2025-01-01T08:00:00Z
+    timestamp:
+      type: rfc3339
+      zone: UTC
+loader:
+  rate: 100
+  duration: 10s
+  logs:
+    recordsPerRequest: 1
+  http:
+    host: localhost
+    port: 4000
+    uri: /api/v1/users
+    method: post
+    headers:
+      content-type: application/json
+    compression: gzip
+    responseHeaderTimeout: 10s

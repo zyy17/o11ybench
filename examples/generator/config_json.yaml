@@ -1,0 +1,34 @@
+generator:
+  logs:
+    tokens:
+    - name: domain
+      type: string
+      fake:
+        kind: domainName
+    
+    - name: username
+      type: string
+      fake:
+        kind: username
+    
+    - name: message
+      type: string
+      fake:
+        kind: words
+        options:
+          count: 10
+    
+    format:
+      type: json
+
+    output:
+      count: 100
+      interval: 3s
+
+  time:
+    range:
+      start: 2025-01-01T08:00:00Z
+      end: 2025-01-02T08:00:00Z
+    timestamp:
+      type: rfc3339
+      zone: UTC
