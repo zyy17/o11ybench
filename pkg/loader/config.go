@@ -67,9 +67,8 @@ type HTTPConfig struct {
 // Defaults returns the default loader config.
 func (c Config) Defaults() *Config {
 	return &Config{
-		Workers:  2,
-		Duration: 10 * time.Second,
-		HTTP:     *HTTPConfig{}.defaults(),
+		Workers: 2,
+		HTTP:    *HTTPConfig{}.defaults(),
 	}
 }
 
