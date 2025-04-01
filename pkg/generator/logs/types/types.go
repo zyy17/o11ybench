@@ -32,9 +32,6 @@ type Output struct {
 // Defaults returns the default configuration for the logs generator.
 func (c LogsGeneratorConfig) Defaults() *LogsGeneratorConfig {
 	return &LogsGeneratorConfig{
-		Format: &LogFormat{
-			Type: LogFormatTypeJSON,
-		},
 		Output: &Output{
 			Count:    1000,
 			Interval: time.Second * 1,

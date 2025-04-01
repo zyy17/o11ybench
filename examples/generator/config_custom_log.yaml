@@ -1,0 +1,49 @@
+generator:
+  logs:
+    tokens:
+      - name: app
+        type: int32
+        fake:
+          kind: number
+          display: "kubernetes.pod_labels.app"
+          options:
+            min: "1"
+            max: "100"
+            prefix: "app-"
+      
+      - name: namespace
+        display: "kubernetes.namespace"
+        type: string
+        fake:
+          kind: words
+          options:
+            fixedWords:
+              - "default"
+      
+      - name: pod_ip
+        type: string
+        fake:
+          kind: ipv4
+      
+      - name: message
+        type: string
+        fake:
+          kind: words
+          options:
+            sizeRangeWithPossibility:
+              - "99%:10bytes-20bytes"
+              - "1%:1kb-2kb"
+    format:
+      custom: "[ {{ .timestamp }} ] {{ .pod_ip }}/{{ .namespace }} | {{ .app }} | {{ .message }}"
+      
+    output:
+      count: 100
+      interval: 5s
+  
+  time:
+    range:
+      start: 2025-01-01T08:00:00Z
+      end: 2025-01-02T08:00:00Z
+    timestamp:
+      type: rfc3339
+      zone: UTC
