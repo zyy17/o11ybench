@@ -16,7 +16,7 @@ The following diagram shows the future architecture of `o11ybench`.
 
 ## 🪄 Features
 
-- Support to generate logs by **ANY** format with the config file
+- Support to generate logs by **ANY** format with the config file based on template syntax(like [`example/generator/logs/custom_log.yaml`](./examples/generator/logs/custom_log.yaml))
 
 - Support to generate logs for common log format:
   - Apache Common Log
@@ -25,7 +25,6 @@ The following diagram shows the future architecture of `o11ybench`.
   - RFC3164 Log
   - RFC5424 Log
   - JSON Log
-  - Any custom log format base on template syntax(like [`example/generator/logs/custom_log.yaml`](./examples/generator/logs/custom_log.yaml))
 
 - Support to run the HTTP ingestion benchmark
 
