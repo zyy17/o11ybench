@@ -106,6 +106,7 @@ func (l *Loader) workerLoop(w *worker) {
 				fmt.Printf("worker [%d] failed to make request: %v\n", w.id, err)
 			} else {
 				l.collector.IncSuccessCount(1)
+				l.collector.IncRecordsCount(int64(l.cfg.Logs.RecordsPerRequest))
 			}
 
 			// Check if the worker should stop.

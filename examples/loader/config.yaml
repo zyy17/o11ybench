@@ -24,9 +24,10 @@ generator:
 
 loader:
   rate: 100
-  duration: 10s
+  duration: 10s # If not set, the test will keep running until the interrupt signal is received.
   logs:
     recordsPerRequest: 10
+  workers: 2
   http:
     host: localhost
     port: 4000
