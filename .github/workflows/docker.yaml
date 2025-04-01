@@ -39,4 +39,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
+            registry.cn-hangzhou.aliyuncs.com/zyyinternal/o11ybench:latest
             registry.cn-hangzhou.aliyuncs.com/zyyinternal/o11ybench:${{ env.image_tag }}
