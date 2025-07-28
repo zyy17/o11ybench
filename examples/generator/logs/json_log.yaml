@@ -22,7 +22,7 @@ generator:
       type: json
 
     output:
-      count: 100
+      totalCount: 100
       interval: 3s
 
   time:

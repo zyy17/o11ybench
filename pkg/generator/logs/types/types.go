@@ -22,8 +22,11 @@ type LogsGeneratorConfig struct {
 
 // Output is the configuration for the output of the logs. It's only used for `generate` subcommand.
 type Output struct {
-	// Count is the total number of logs to generate.
-	Count int `yaml:"count,omitempty"`
+	// TotalCount is the total number of logs to generate.
+	TotalCount int `yaml:"totalCount,omitempty"`
+
+	// CountPerInterval is the number of logs to generate per interval.
+	CountPerInterval int `yaml:"countPerInterval,omitempty"`
 
 	// Interval is the interval for each log.
 	Interval time.Duration `yaml:"interval,omitempty"`
@@ -33,8 +36,9 @@ type Output struct {
 func (c LogsGeneratorConfig) Defaults() *LogsGeneratorConfig {
 	return &LogsGeneratorConfig{
 		Output: &Output{
-			Count:    1000,
-			Interval: time.Second * 1,
+			TotalCount:       1000,
+			CountPerInterval: 1,
+			Interval:         time.Second * 1,
 		},
 	}
 }

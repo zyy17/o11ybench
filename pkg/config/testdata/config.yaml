@@ -24,10 +24,11 @@ generator:
   time:
     range:
       start: 2025-01-01T08:00:00Z
-      end: 2025-01-01T08:00:00Z
+      end: 2025-01-01T08:05:00Z
     timestamp:
       type: rfc3339
       zone: UTC
+
 loader:
   rate: 100
   duration: 10s

@@ -37,7 +37,7 @@ generator:
       custom: "[ {{ .timestamp }} ] {{ .pod_ip }}/{{ .namespace }} | {{ .app }} | {{ .message }}"
       
     output:
-      count: 100
+      totalCount: 100
       interval: 5s
   
   time:
