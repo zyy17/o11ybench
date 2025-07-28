@@ -41,7 +41,7 @@ func (g *LogsGenerator) Generate(opts *types.GeneratorOptions) ([]byte, error) {
 
 	if g.cfg.Output != nil {
 		if g.timeCfg == nil || g.timeCfg.Range == nil {
-			logs, err := g.generateMultipleLogs(g.cfg.Output.Count, time.Now(), g.timeCfg)
+			logs, err := g.generateMultipleLogs(g.cfg.Output.TotalCount, time.Now(), g.timeCfg)
 			if err != nil {
 				return nil, err
 			}
@@ -54,8 +54,8 @@ func (g *LogsGenerator) Generate(opts *types.GeneratorOptions) ([]byte, error) {
 			start = g.timeCfg.Range.Start
 			end   = g.timeCfg.Range.End
 		)
-		if g.cfg.Output.Count > 0 && g.cfg.Output.Interval > 0 {
-			expectedEnd := start.Add(g.cfg.Output.Interval * time.Duration(g.cfg.Output.Count))
+		if g.cfg.Output.TotalCount > 0 && g.cfg.Output.Interval > 0 {
+			expectedEnd := start.Add(g.cfg.Output.Interval * time.Duration(g.cfg.Output.TotalCount))
 			if !expectedEnd.After(g.timeCfg.Range.End) {
 				end = expectedEnd
 			}
@@ -63,13 +63,10 @@ func (g *LogsGenerator) Generate(opts *types.GeneratorOptions) ([]byte, error) {
 
 		current := start
 		for current.Before(end) {
-			log, err := g.generateOneLineLog(current, g.timeCfg)
+			log, err := g.generateMultipleLogs(g.cfg.Output.CountPerInterval, current, g.timeCfg)
 			if err != nil {
 				return nil, err
 			}
-
-			// Add the newline to the log.
-			log = append(log, '\n')
 
 			logs = append(logs, log...)
 
